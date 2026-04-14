@@ -1,26 +1,93 @@
-# 🍌 Banana Ripeness Classification — AWS JupyterLab
+# 🤟 ASL Alphabet Recognition – AWS SageMaker Notebooks
 
-This repository contains three Jupyter notebooks for training and evaluating CNN models to classify banana ripeness on **AWS SageMaker JupyterLab**, with full S3 integration and error handling.
+AWS SageMaker JupyterLab notebooks for the **American Sign Language (ASL) Alphabet Recognition** project.
 
-## 👉 Getting Started
+Source project: [ParanKafleUTS/New](https://github.com/ParanKafleUTS/New)
 
-**Read [`GUIDE.md`](GUIDE.md) first — it explains everything step by step, even if you have never used AWS before.**
+---
 
-## Notebooks (run in order)
+## What This Repository Contains
 
-| # | Notebook | Purpose |
-|---|----------|---------|
-| 1 | `01_setup_and_data.ipynb` | Install packages, configure S3, upload dataset |
-| 2 | `02_train_models.ipynb` | Train MobileNetV3, EfficientNetB0, ResNet50 |
-| 3 | `03_evaluate_and_select_best.ipynb` | Evaluate, compare models, save best to S3 |
+Three self-contained Jupyter notebooks that implement a complete ML pipeline for recognising the **29-class ASL alphabet** (A–Z + del, nothing, space) on AWS SageMaker with S3 storage.
 
-## Models
+| Notebook | Purpose |
+|----------|---------|
+| `01_setup_and_data.ipynb` | Install packages · configure S3 · download Kaggle dataset · stratified split · upload |
+| `02_train_models.ipynb` | Train Landmark MLP + 9 CNN models · upload weights to S3 |
+| `03_evaluate_and_select_best.ipynb` | Evaluate all models · confusion matrices · bar chart · select best |
 
-- **MobileNetV3** — fast and lightweight
-- **EfficientNetB0** — balanced accuracy and speed  
-- **ResNet50** — powerful classic architecture
+---
+
+## Models Trained
+
+| # | Approach | Architectures |
+|---|----------|--------------|
+| 1 | Hand Landmark MLP (63 MediaPipe features) | Custom MLP (512 → 256 → 29) |
+| 2 | CNN on Raw Images | MobileNetV2, EfficientNetB0, ResNet50 |
+| 3 | CNN on Cropped Hand Images | MobileNetV2, EfficientNetB0, ResNet50 |
+| 4 | CNN on Hand Skeleton Images | MobileNetV2, EfficientNetB0, ResNet50 |
+
+All CNNs use **ImageNet** pre-trained weights, a frozen-backbone phase, then fine-tuning of the top 20 layers.  
+All pipelines use `EarlyStopping(patience=5)`, `ModelCheckpoint`, and `ReduceLROnPlateau`.
+
+---
+
+## Quick Start
+
+### 1. Open SageMaker JupyterLab
+
+Recommended instance: **`ml.g4dn.xlarge`** (1× NVIDIA T4 GPU, ~$0.70/hr)
+
+### 2. Run notebooks in order
+
+```
+01_setup_and_data.ipynb   ← configure BUCKET_NAME first
+02_train_models.ipynb
+03_evaluate_and_select_best.ipynb
+```
+
+### 3. Required: Kaggle API token
+
+Download the [Kaggle ASL Alphabet dataset](https://www.kaggle.com/datasets/grassknoted/asl-alphabet) (87 000 images).  
+Upload `~/.kaggle/kaggle.json` before running Notebook 1.
+
+---
 
 ## Dataset
 
-Banana Ripeness Classification (6 classes: freshripe, freshunripe, overripe, ripe, rotten, unripe)  
-Source: [Roboflow Universe](https://universe.roboflow.com/musa-acuminata/banana-ripeness-classification)
+**Kaggle ASL Alphabet Dataset** by GrassKnoted  
+→ https://www.kaggle.com/datasets/grassknoted/asl-alphabet
+
+- 87 000 images across 29 classes (A–Z + del, nothing, space)
+- 200×200 px RGB images, ~3 000 images per class
+- Split: 70% train / 15% val / 15% test (stratified)
+
+---
+
+## Technology Stack
+
+| Layer | Technology |
+|-------|-----------|
+| ML Framework | TensorFlow 2.13 / Keras |
+| Landmark Detection | MediaPipe Hands |
+| Data | NumPy, Pandas, Pillow, OpenCV |
+| Evaluation | scikit-learn, Matplotlib, Seaborn |
+| Storage | AWS S3 |
+| Compute | AWS SageMaker JupyterLab |
+
+---
+
+## Full Documentation
+
+See **[GUIDE.md](GUIDE.md)** for:
+- Cell-by-cell instructions
+- S3 file map
+- Metric explanations
+- Common errors & fixes
+- Web app deployment steps
+
+---
+
+## License
+
+Educational and research use.
