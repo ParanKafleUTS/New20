@@ -158,22 +158,32 @@ class HandDetector:
 
     def __enter__(self):
         if self.mode == "solutions":
-            import mediapipe as mp
-            self._detector = mp.solutions.hands.Hands(
-                static_image_mode=True,
-                max_num_hands=1,
-                min_detection_confidence=0.7,
-            )
+            try:
+                import mediapipe as mp
+                self._detector = mp.solutions.hands.Hands(
+                    static_image_mode=True,
+                    max_num_hands=1,
+                    min_detection_confidence=0.7,
+                )
+            except OSError as exc:
+                # Missing system library (e.g. libEGL.so.1 on headless Linux)
+                logger.warning("MediaPipe Solutions failed to load C library: %s — falling back to unavailable.", exc)
+                self.mode = "unavailable"
         elif self.mode == "tasks":
-            from mediapipe.tasks import python as mp_python
-            from mediapipe.tasks.python import vision as mp_vision
-            base_options = mp_python.BaseOptions(model_asset_path=_task_model_path)
-            options = mp_vision.HandLandmarkerOptions(
-                base_options=base_options,
-                num_hands=1,
-                min_hand_detection_confidence=0.7,
-            )
-            self._detector = mp_vision.HandLandmarker.create_from_options(options)
+            try:
+                from mediapipe.tasks import python as mp_python
+                from mediapipe.tasks.python import vision as mp_vision
+                base_options = mp_python.BaseOptions(model_asset_path=_task_model_path)
+                options = mp_vision.HandLandmarkerOptions(
+                    base_options=base_options,
+                    num_hands=1,
+                    min_hand_detection_confidence=0.7,
+                )
+                self._detector = mp_vision.HandLandmarker.create_from_options(options)
+            except OSError as exc:
+                # Missing system library (e.g. libEGL.so.1 on headless Linux)
+                logger.warning("MediaPipe Tasks failed to load C library: %s — falling back to unavailable.", exc)
+                self.mode = "unavailable"
         # mode == 'unavailable' — _detector stays None
         return self
 
