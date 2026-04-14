@@ -69,11 +69,27 @@ Upload `~/.kaggle/kaggle.json` before running Notebook 1.
 | Layer | Technology |
 |-------|-----------|
 | ML Framework | TensorFlow 2.13 / Keras |
-| Landmark Detection | MediaPipe Hands |
-| Data | NumPy, Pandas, Pillow, OpenCV |
+| Landmark Detection | MediaPipe 0.10.33 (Tasks API or Solutions API) |
+| Data | NumPy (<2.0), Pandas, Pillow, OpenCV |
 | Evaluation | scikit-learn, Matplotlib, Seaborn |
 | Storage | AWS S3 |
 | Compute | AWS SageMaker JupyterLab |
+
+### MediaPipe Compatibility
+
+The repository ships a helper module `mediapipe_utils.py` that automatically
+picks the best available API:
+
+| Mode | When used | Requirement |
+|------|-----------|-------------|
+| **Tasks API** | mediapipe 0.10.30 – 0.10.33 | Downloads `hand_landmarker.task` (~8 MB) at runtime |
+| **Solutions API** | older mediapipe builds | `mp.solutions.hands` must be importable |
+| **Fallback** | nothing works | Landmark MLP skipped; all CNN approaches still run |
+
+> **Note:** `mediapipe==0.10.9` does not exist on PyPI.  
+> Available versions are: 0.10.13, 0.10.14, 0.10.15, 0.10.18, 0.10.20, 0.10.21,
+> 0.10.30, 0.10.31, 0.10.32, 0.10.33.  
+> The notebooks pin `mediapipe==0.10.33` and `numpy<2.0` to avoid ABI conflicts.
 
 ---
 
