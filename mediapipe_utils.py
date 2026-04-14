@@ -215,7 +215,7 @@ class HandDetector:
         return None  # should not reach here
 
 
-def extract_landmarks(image_bgr: np.ndarray, detector: HandDetector | None = None):
+def extract_landmarks(image_bgr: np.ndarray, detector: "HandDetector | None" = None) -> np.ndarray | None:
     """
     Extract 63 hand-landmark features from a BGR image.
 
@@ -247,8 +247,8 @@ def extract_landmarks(image_bgr: np.ndarray, detector: HandDetector | None = Non
 def get_hand_bbox(
     image_bgr: np.ndarray,
     padding: float = 0.20,
-    detector: HandDetector | None = None,
-):
+    detector: "HandDetector | None" = None,
+) -> tuple[int, int, int, int] | None:
     """
     Return the bounding box of the detected hand in pixel coordinates.
 
@@ -289,7 +289,7 @@ def get_hand_bbox(
 
 
 def draw_skeleton(
-    landmarks,
+    landmarks: list[tuple[float, float, float]] | None,
     output_size: tuple[int, int] = (224, 224),
     bg_color: tuple[int, int, int] = (255, 255, 255),
     conn_color: tuple[int, int, int] = (0, 0, 0),
