@@ -144,17 +144,74 @@ s3://<BUCKET>/asl-alphabet/
 
 ---
 
+## MediaPipe Version Compatibility
+
+### Available PyPI versions (as of 2026-04)
+
+```
+0.10.13  0.10.14  0.10.15  0.10.18  0.10.20  0.10.21
+0.10.30  0.10.31  0.10.32  0.10.33
+```
+
+> `mediapipe==0.10.9` **does not exist** — you will see  
+> `ERROR: No matching distribution found for mediapipe==0.10.9`.
+
+### How the compatibility layer works (`mediapipe_utils.py`)
+
+The helper module auto-detects which API is available and falls back gracefully:
+
+| Mode | MediaPipe version | How it works |
+|------|-------------------|-------------|
+| **Tasks API** | 0.10.30 – 0.10.33 | Downloads `hand_landmarker.task` (~8 MB) on first use |
+| **Solutions API** | older builds with `mp.solutions` | Uses `mp.solutions.hands.Hands()` directly |
+| **Fallback** | MediaPipe broken / unavailable | Landmark MLP (Approach 1) is skipped; all 9 CNN models still run |
+
+### NumPy version conflict
+
+MediaPipe binary wheels are compiled against NumPy 1.x.  
+Installing NumPy ≥ 2.0 causes ABI errors (`ValueError: module compiled against ABI version 0x…`).  
+Notebook 1 pins `numpy<2.0` to prevent this.
+
+---
+
 ## Common Errors & Fixes
 
 | Error | Fix |
 |-------|-----|
+| `No matching distribution found for mediapipe==0.10.9` | Use `mediapipe==0.10.33` — version 0.10.9 was never published |
+| `ImportError: cannot import 'solutions'` | You have mediapipe 0.10.30+; the Solutions API was removed. `mediapipe_utils.py` switches to the Tasks API automatically |
+| `ValueError: module compiled against ABI version` | NumPy ≥ 2.0 is installed. Run `pip install "numpy<2.0"` and restart the kernel |
+| `mediapipe_utils.py not found` | Ensure `mediapipe_utils.py` is in the same folder as the notebooks |
+| `Could not download hand-landmarker model` | The SageMaker instance may not have outbound internet access. The Tasks API model (~8 MB) must be downloadable from `storage.googleapis.com`. Check VPC/NAT gateway settings |
 | `kaggle: command not found` | Run `pip install kaggle` and ensure `~/.kaggle/kaggle.json` exists |
 | `NoSuchBucket` / `AccessDenied` | Check IAM role has S3 write access to the target bucket |
 | CUDA OOM during training | Reduce `BATCH_SIZE` from 32 to 16 in Notebook 2 |
-| `No hand detected` for many images | Normal — "nothing" class images have no hand; the model falls back to raw image |
+| `No hand detected` for many images | Normal — "nothing" class images have no hand; cropping falls back to the raw image |
 | `FileNotFoundError: config.json` | Run Notebook 1 first |
-| MediaPipe `Process finished with exit code 132` | Update mediapipe: `pip install --upgrade mediapipe` |
 | TF GPU not found on SageMaker | Use a GPU instance type (`ml.g4dn.xlarge` or larger) |
+
+### Debugging MediaPipe manually
+
+Run this in any notebook cell to see exactly which mode is active:
+
+```python
+import sys
+sys.path.insert(0, ".")       # ensure mediapipe_utils.py is found
+from mediapipe_utils import print_mediapipe_info, get_mediapipe_mode
+print_mediapipe_info()
+```
+
+Expected output (Tasks API):
+
+```
+============================================================
+MediaPipe Environment Info
+============================================================
+  Version       : 0.10.33
+  Mode          : tasks
+  Model file    : /tmp/mediapipe_models/hand_landmarker.task
+============================================================
+```
 
 ---
 
